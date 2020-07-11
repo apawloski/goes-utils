@@ -44,6 +44,7 @@ Notes:
 - Granularity is hours -- minutes must be 00 in the datetime arguments
 - `--band` is not yet supported
 - `--data-dir` will allow you to cache .nc and .png files to speed up subsequent runs
+- This should be able to infer the video format based off of your file extension in `output_path` (i.e. mp4, gif, etc)
 
 
 
