@@ -1,0 +1,10 @@
+# Byte-compiled / optimized / DLL files
+**__pycache__/
+*.py[cod]
+**.plsy
+
+# Temp files
+**~
+
+# C extensions
+*.so
