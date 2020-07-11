@@ -15,8 +15,10 @@ def main():
     parser.add_argument('output_path',
                         help='Location for output video file')
     parser.add_argument('--start-datetime', required=True,
+                        metavar="'YYYY-MM-DD HH:00'",
                         help='Start in YYYY-MM-DD HH:MM format')
     parser.add_argument('--end-datetime', required=True,
+                        metavar="'YYYY-MM-DD HH:00'",
                         help='End in YYYY-MM-DD HH:MM format')
     parser.add_argument('--data-dir', default="./data",
                         help='Desired location of intermediate data')
