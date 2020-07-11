@@ -1,6 +1,7 @@
-from commonlib.goes import *
+from commonlib.goes import convert_scene_to_png
 
 import argparse
+
 
 def main():
     parser = argparse.ArgumentParser(description='Converts a single GOES netCDF file to a single PNG.')
@@ -14,5 +15,6 @@ def main():
     convert_scene_to_png(args.netcdf_path, args.png_path)
     print("Done!")
     
+
 if __name__ == "__main__":
     main()

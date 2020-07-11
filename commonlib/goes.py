@@ -13,9 +13,11 @@ import numpy as np
 
 s3 = boto3.client("s3")
 
+
 def convert_datetime_to_goes_date(dt):
     """Converts datetime to GOES friendly date string"""
     return
+
 
 def retrieve_scene_by_key(key, data_dir="./data",
                           bucket="noaa-goes16"):
@@ -34,6 +36,7 @@ def retrieve_scene_by_key(key, data_dir="./data",
         s3.download_file(bucket, key, output_path)
     
     return output_path
+
 
 def find_scenes_in_date_range(start_date, end_date,
                               bucket="noaa-goes16",
@@ -59,6 +62,7 @@ def find_scenes_in_date_range(start_date, end_date,
 
     return scenes_list
 
+
 def convert_scene_to_png(input_nc, output_png):
     """Converts netCDF4 to a true color PNG file"""
     g16nc = Dataset(input_nc, 'r')
@@ -71,7 +75,7 @@ def convert_scene_to_png(input_nc, output_png):
 
     # Make the green band using a linear relationship
     ref_green = np.ma.copy(ref_veggie)
-    gooddata = np.where(ref_veggie.mask == False)
+    gooddata = np.where(ref_veggie.mask is False)
     ref_green[gooddata] = 0.48358168 * ref_red[gooddata] + 0.45706946 * ref_blue[gooddata] + 0.06038137 * ref_veggie[gooddata]
 
     # Prepare the Clean IR band by converting brightness temperatures to greyscale values
@@ -84,7 +88,7 @@ def convert_scene_to_png(input_nc, output_png):
     cleanir_c = 1.0 - np.float64(cleanir_c)
 
     # Make an alpha mask so off Earth alpha = 0
-    mask = np.where(band1.mask == True)
+    mask = np.where(band1.mask is True)
     alpha = np.ones(band1.shape)
     alpha[mask] = 0.0
     blended = np.dstack([np.maximum(ref_red, cleanir_c), np.maximum(ref_green, cleanir_c), np.maximum(ref_blue, cleanir_c), alpha])
@@ -97,4 +101,3 @@ def convert_scene_to_png(input_nc, output_png):
     fig.savefig(output_png, transparent=True, bbox_inches = 'tight', pad_inches = 0)
     plt.clf()
     return
-

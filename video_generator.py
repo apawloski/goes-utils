@@ -1,4 +1,4 @@
-from commonlib.goes import *
+from commonlib.goes import find_scenes_in_date_range, retrieve_scene_by_key, convert_scene_to_png
 
 import argparse
 from datetime import datetime
@@ -9,6 +9,7 @@ import os
 import tempfile
 
 import ffmpeg
+
 
 def main():
     parser = argparse.ArgumentParser(description='Produces a video of GOES scenes between argument start and end datetimes.')
@@ -35,7 +36,7 @@ def main():
                         choices=["INFO", "DEBUG", "WARN", "ERROR"],
                         help="Log level")
     args = parser.parse_args()
-    logging.basicConfig(level= map_log_level(args.log_level))
+    logging.basicConfig(level=map_log_level(args.log_level))
     
     global DATA_DIR
     DATA_DIR = args.data_dir
@@ -66,6 +67,7 @@ def main():
     
     return
 
+
 def convert_pngs_to_video(png_scenes_list, output_path):
     with tempfile.TemporaryDirectory() as dirpath:
         # symlink the pngs so we can use a * glob
@@ -84,6 +86,7 @@ def convert_pngs_to_video(png_scenes_list, output_path):
         ffmpeg.run(stream, overwrite_output=True)
     return
 
+
 def map_log_level(level):
     return {
         'INFO': logging.INFO,
@@ -91,6 +94,7 @@ def map_log_level(level):
         'WARN': logging.WARN,
         'ERROR': logging.ERROR
     }[level]
+
 
 def handle_scenes(scenes):
     png_paths = []
@@ -108,6 +112,7 @@ def handle_scenes(scenes):
             
         png_paths.append(png_path)
     return png_paths
+
 
 if __name__ == "__main__":
     main()
