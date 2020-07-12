@@ -98,6 +98,10 @@ def convert_scene_to_png(input_nc, output_png):
     plt.imshow(blended)
     plt.axis('off')
     fig.gca().set_axis_off()
-    fig.savefig(output_png, transparent=True, bbox_inches = 'tight', pad_inches = 0)
+    fig.savefig(output_png,
+                facecolor='black',
+                transparent=True,
+                bbox_inches='tight',
+                pad_inches=0)
     plt.clf()
     return
