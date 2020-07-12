@@ -75,7 +75,7 @@ def convert_scene_to_png(input_nc, output_png):
 
     # Make the green band using a linear relationship
     ref_green = np.ma.copy(ref_veggie)
-    gooddata = np.where(ref_veggie.mask is False)
+    gooddata = np.where(ref_veggie.mask == False)
     ref_green[gooddata] = 0.48358168 * ref_red[gooddata] + 0.45706946 * ref_blue[gooddata] + 0.06038137 * ref_veggie[gooddata]
 
     # Prepare the Clean IR band by converting brightness temperatures to greyscale values
@@ -88,7 +88,7 @@ def convert_scene_to_png(input_nc, output_png):
     cleanir_c = 1.0 - np.float64(cleanir_c)
 
     # Make an alpha mask so off Earth alpha = 0
-    mask = np.where(band1.mask is True)
+    mask = np.where(band1.mask == True)
     alpha = np.ones(band1.shape)
     alpha[mask] = 0.0
     blended = np.dstack([np.maximum(ref_red, cleanir_c), np.maximum(ref_green, cleanir_c), np.maximum(ref_blue, cleanir_c), alpha])
