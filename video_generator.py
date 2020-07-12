@@ -28,6 +28,9 @@ def main():
     parser.add_argument('--band', default="true-color",
                         choices=['tc', '1', '2', '3'],
                         help="Not yet supported")
+    parser.add_argument('--satellite', default="noaa-goes16",
+                        choices=['noaa-goes16', 'noaa-goes17'],
+                        help="Which satellite to use")
     parser.add_argument('--product', default="ABI-L2-MCMIPF",
                         choices=['ABI-L2-MCMIPF', 'ABI-L2-MCMIPC',
                                  'ABI-L2-MCMIPM1', 'ABI-L2-MCMIPM2'],
@@ -35,18 +38,19 @@ def main():
     parser.add_argument('--log-level', default="INFO",
                         choices=["INFO", "DEBUG", "WARN", "ERROR"],
                         help="Log level")
+    global args # Referenced in subprocesses -- not thread write safe
     args = parser.parse_args()
     logging.basicConfig(level=map_log_level(args.log_level))
-    
-    global DATA_DIR
-    DATA_DIR = args.data_dir
 
     # Search for scenes in time range
     start_dt = datetime.strptime(args.start_datetime, "%Y-%m-%d %H:%M")
     end_dt = datetime.strptime(args.end_datetime, "%Y-%m-%d %H:%M")
     if end_dt > start_dt:
         logging.debug(f"Finding scenes between {start_dt} and {end_dt}")
-        nc_scenes_list = find_scenes_in_date_range(start_dt, end_dt, product=args.product)        
+        nc_scenes_list = find_scenes_in_date_range(start_dt,
+                                                   end_dt,
+                                                   bucket=args.satellite,
+                                                   product=args.product)
     else:
         logging.error("Error: Start Date must be before End Date. Exiting.")
         return
@@ -81,7 +85,8 @@ def convert_pngs_to_video(png_scenes_list, output_path):
                                output_path,
                                crf=20,
                                preset='slower',
-                               movflags='faststart')
+                               movflags='faststart'
+        )
 #                               pix_fmt='yuv420p') # This works for full disk but breaks CONUS
         ffmpeg.run(stream, overwrite_output=True)
     return
@@ -101,7 +106,7 @@ def handle_scenes(scenes):
     for scene in scenes:
         logging.info(f"Processing {scene}")
         logging.debug(f"{current_process().name} Retrieving scene: {scene}")
-        local_nc_path = retrieve_scene_by_key(scene, data_dir=DATA_DIR)
+        local_nc_path = retrieve_scene_by_key(scene, data_dir=args.data_dir, bucket=args.satellite)
         png_path = f"{local_nc_path}.png"
 
         if os.path.isfile(png_path):
