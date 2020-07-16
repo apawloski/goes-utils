@@ -63,7 +63,7 @@ def find_scenes_in_date_range(start_date, end_date,
     return scenes_list
 
 
-def convert_scene_to_png(input_nc, output_png):
+def convert_scene_to_png(input_nc, output_png, date=None):
     """Converts netCDF4 to a true color PNG file"""
     g16nc = Dataset(input_nc, 'r')
     band1 = g16nc.variables['CMI_C01'][:]
@@ -96,12 +96,16 @@ def convert_scene_to_png(input_nc, output_png):
     # Plot it! Without axis & labels
     fig = plt.figure(figsize=(6,6),dpi=300)
     plt.imshow(blended)
+    ax = plt.gca()
     plt.axis('off')
-    fig.gca().set_axis_off()
-    fig.savefig(output_png,
-                facecolor='black',
-                transparent=True,
-                bbox_inches='tight',
-                pad_inches=0)
-    plt.clf()
+
+    plt.gca().text(0,0, date,
+        horizontalalignment='left',
+        verticalalignment='top',
+        color="white",
+        size=4,
+        weight='normal')
+
+    fig.savefig(output_png, facecolor='black', transparent=True, bbox_inches='tight', pad_inches=.1)
+    plt.close(fig)
     return

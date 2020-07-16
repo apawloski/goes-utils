@@ -85,8 +85,7 @@ def convert_pngs_to_video(png_scenes_list, output_path):
                                output_path,
                                crf=20,
                                preset='slower',
-                               movflags='faststart'
-        )
+                               movflags='faststart')
 #                               pix_fmt='yuv420p') # This works for full disk but breaks CONUS
         ffmpeg.run(stream, overwrite_output=True)
     return
@@ -113,7 +112,12 @@ def handle_scenes(scenes):
             logging.debug(f"{current_process().name} Using cached png file at {png_path}")
         else:
             logging.debug(f"{current_process().name} Converting {local_nc_path} to {png_path}")
-            convert_scene_to_png(local_nc_path, png_path)
+            # Derive timestamp from filename
+            # OR_ABI-L2-MCMIPF-M3_G16_s20181910545433_e20181910556200_c20181910556288.nc
+            end_scan = os.path.basename(scene).split('_')[-1]
+            dt_string = end_scan[1:15]
+            dt = datetime.strptime(dt_string, "%Y%j%H%M%S%f")
+            convert_scene_to_png(local_nc_path, png_path, date=dt)
             
         png_paths.append(png_path)
     return png_paths
