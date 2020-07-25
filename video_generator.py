@@ -4,12 +4,13 @@ import argparse
 from datetime import datetime
 import itertools
 import logging
-from multiprocessing import Pool, current_process
 import os
 import tempfile
 
 import ffmpeg
+import tqdm
 
+from multiprocessing import Pool, current_process, set_start_method, get_context
 
 def main():
     parser = argparse.ArgumentParser(description='Produces a video of GOES scenes between argument start and end datetimes.')
@@ -38,7 +39,7 @@ def main():
     parser.add_argument('--log-level', default="INFO",
                         choices=["INFO", "DEBUG", "WARN", "ERROR"],
                         help="Log level")
-    global args # Referenced in subprocesses -- not thread write safe
+    global args
     args = parser.parse_args()
     logging.basicConfig(level=map_log_level(args.log_level))
 
@@ -57,9 +58,12 @@ def main():
 
     # Download each scene and convert to png
     logging.debug(f"Farming processing to {args.processes} processes")
-    chunks = [nc_scenes_list[i::args.processes] for i in range(args.processes)]
     pool = Pool(processes=args.processes)
-    multi_png_paths = pool.map(handle_scenes, chunks)
+    with get_context('spawn').Pool(processes=args.processes,
+                                   initializer=init,
+                                   initargs=(args,)) as pool:
+        multi_png_paths = list(tqdm.tqdm(pool.imap_unordered(handle_scenes, nc_scenes_list),
+                                     total=len(nc_scenes_list)))
     pool.close()
     pool.join()
     png_scenes_list = list(itertools.chain.from_iterable(multi_png_paths))
@@ -100,28 +104,31 @@ def map_log_level(level):
     }[level]
 
 
-def handle_scenes(scenes):
+def handle_scenes(scene):
     png_paths = []
-    for scene in scenes:
-        logging.info(f"Processing {scene}")
-        logging.debug(f"{current_process().name} Retrieving scene: {scene}")
-        local_nc_path = retrieve_scene_by_key(scene, data_dir=args.data_dir, bucket=args.satellite)
-        png_path = f"{local_nc_path}.png"
+#    logging.debug(f"{current_process().name} Retrieving scene: {scene}")
+    local_nc_path = retrieve_scene_by_key(scene, data_dir=args.data_dir, bucket=args.satellite)
+    png_path = f"{local_nc_path}.png"
 
-        if os.path.isfile(png_path):
-            logging.debug(f"{current_process().name} Using cached png file at {png_path}")
-        else:
-            logging.debug(f"{current_process().name} Converting {local_nc_path} to {png_path}")
-            # Derive timestamp from filename
-            # OR_ABI-L2-MCMIPF-M3_G16_s20181910545433_e20181910556200_c20181910556288.nc
-            end_scan = os.path.basename(scene).split('_')[-1]
-            dt_string = end_scan[1:15]
-            dt = datetime.strptime(dt_string, "%Y%j%H%M%S%f")
-            convert_scene_to_png(local_nc_path, png_path, date=dt)
+    if os.path.isfile(png_path):
+ #       logging.debug(f"{current_process().name} Using cached png file at {png_path}")
+        pass
+    else:
+ #       logging.debug(f"{current_process().name} Converting {local_nc_path} to {png_path}")
+        # Derive timestamp from filename
+        # OR_ABI-L2-MCMIPF-M3_G16_s20181910545433_e20181910556200_c20181910556288.nc
+        end_scan = os.path.basename(scene).split('_')[-1]
+        dt_string = end_scan[1:15]
+        dt = datetime.strptime(dt_string, "%Y%j%H%M%S%f")
+        convert_scene_to_png(local_nc_path, png_path, date=dt)
             
-        png_paths.append(png_path)
+    png_paths.append(png_path)
     return png_paths
 
+def init(n):
+    global args
+    args = n
 
 if __name__ == "__main__":
+#    set_start_method("spawn")
     main()
