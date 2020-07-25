@@ -11,8 +11,6 @@ matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import numpy as np
 
-s3 = boto3.client("s3")
-
 
 def convert_datetime_to_goes_date(dt):
     """Converts datetime to GOES friendly date string"""
@@ -28,11 +26,12 @@ def retrieve_scene_by_key(key, data_dir="./data",
 
     # If the file does not exist, go get it from S3
     if os.path.isfile(output_path):
-        print(f"Using cached nc file at {output_path}")
+        # logging.debug(f"Using cached nc file at {output_path}")
+        pass
     else:
         outputdir = os.path.dirname(output_path)
         Path(outputdir).mkdir(parents=True, exist_ok=True)
-
+        s3 = boto3.client("s3")
         s3.download_file(bucket, key, output_path)
     
     return output_path
@@ -53,6 +52,7 @@ def find_scenes_in_date_range(start_date, end_date,
         scene_prefix = f"{product}/{scene_date.tm_year}/{scene_date.tm_yday}/{scene_date.tm_hour:02}/"
 
         # Append objects at S3 location
+        s3 = boto3.client("s3")
         response = s3.list_objects_v2(
             Bucket=bucket,
             Prefix=scene_prefix,
@@ -94,7 +94,7 @@ def convert_scene_to_png(input_nc, output_png, date=None):
     blended = np.dstack([np.maximum(ref_red, cleanir_c), np.maximum(ref_green, cleanir_c), np.maximum(ref_blue, cleanir_c), alpha])
 
     # Plot it! Without axis & labels
-    fig = plt.figure(figsize=(6,6),dpi=300)
+    fig = plt.figure(figsize=(6,6),dpi=600)
     plt.imshow(blended)
     ax = plt.gca()
     plt.axis('off')
