@@ -5,6 +5,7 @@ from datetime import datetime
 import itertools
 import logging
 import os
+import subprocess
 import tempfile
 
 import ffmpeg
@@ -121,7 +122,7 @@ def handle_scenes(scene):
         dt_string = end_scan[1:15]
         dt = datetime.strptime(dt_string, "%Y%j%H%M%S%f")
         convert_scene_to_png(local_nc_path, png_path, date=dt)
-            
+        subprocess.call(f"convert -contrast -normalize {png_path} {png_path}", shell=True)
     png_paths.append(png_path)
     return png_paths
 
