@@ -63,7 +63,7 @@ def find_scenes_in_date_range(start_date, end_date,
     return scenes_list
 
 
-def convert_scene_to_png(input_nc, output_png, date=None):
+def convert_scene_to_png(input_nc, output_png, date=None, dpi=600):
     """Converts netCDF4 to a true color PNG file"""
     g16nc = Dataset(input_nc, 'r')
     band1 = g16nc.variables['CMI_C01'][:]
@@ -94,7 +94,7 @@ def convert_scene_to_png(input_nc, output_png, date=None):
     blended = np.dstack([np.maximum(ref_red, cleanir_c), np.maximum(ref_green, cleanir_c), np.maximum(ref_blue, cleanir_c), alpha])
 
     # Plot it! Without axis & labels
-    fig = plt.figure(figsize=(6,6),dpi=600)
+    fig = plt.figure(figsize=(6,6),dpi=dpi)
     plt.imshow(blended)
     ax = plt.gca()
     plt.axis('off')

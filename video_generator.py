@@ -27,6 +27,8 @@ def main():
                         help='Desired location of intermediate data')
     parser.add_argument('--processes', type=int, default=1,
                         help='Number of processes to use for scene conversion')
+    parser.add_argument('--dpi', type=int, default=600,
+                        help='Resolution in DPI')
     parser.add_argument('--band', default="true-color",
                         choices=['tc', '1', '2', '3'],
                         help="Not yet supported")
@@ -109,7 +111,7 @@ def handle_scenes(scene):
     png_paths = []
 #    logging.debug(f"{current_process().name} Retrieving scene: {scene}")
     local_nc_path = retrieve_scene_by_key(scene, data_dir=args.data_dir, bucket=args.satellite)
-    png_path = f"{local_nc_path}.png"
+    png_path = f"{local_nc_path}.{args.dpi}dpi.png"
 
     if os.path.isfile(png_path):
  #       logging.debug(f"{current_process().name} Using cached png file at {png_path}")
@@ -121,7 +123,7 @@ def handle_scenes(scene):
         end_scan = os.path.basename(scene).split('_')[-1]
         dt_string = end_scan[1:15]
         dt = datetime.strptime(dt_string, "%Y%j%H%M%S%f")
-        convert_scene_to_png(local_nc_path, png_path, date=dt)
+        convert_scene_to_png(local_nc_path, png_path, date=dt, dpi=args.dpi)
         subprocess.call(f"convert -contrast -normalize {png_path} {png_path}", shell=True)
     png_paths.append(png_path)
     return png_paths
