@@ -123,7 +123,7 @@ def handle_scenes(scene):
         end_scan = os.path.basename(scene).split('_')[-1]
         dt_string = end_scan[1:15]
         dt = datetime.strptime(dt_string, "%Y%j%H%M%S%f")
-        convert_scene_to_png(local_nc_path, png_path, date=dt, dpi=args.dpi)
+        convert_scene_to_png(local_nc_path, png_path, date=f"{dt} UTC", dpi=args.dpi)
         subprocess.call(f"convert -contrast -normalize {png_path} {png_path}", shell=True)
     png_paths.append(png_path)
     return png_paths
