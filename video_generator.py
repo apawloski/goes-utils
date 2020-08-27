@@ -82,18 +82,30 @@ def main():
 def convert_pngs_to_video(png_scenes_list, output_path):
     with tempfile.TemporaryDirectory() as dirpath:
         # symlink the pngs so we can use a * glob
-        for png in png_scenes_list:            
+        for png in png_scenes_list:
             basename = os.path.basename(png)
             os.symlink(png, os.path.join(dirpath, basename))
 
         png_links_glob = os.path.join(dirpath, '*.png')
         stream = ffmpeg.input(png_links_glob, pattern_type='glob', framerate=25)
-        stream = ffmpeg.output(stream,
-                               output_path,
-                               crf=20,
-                               preset='slower',
-                               movflags='faststart')
-#                               pix_fmt='yuv420p') # This works for full disk but breaks CONUS
+        if args.product != 'ABI-L2-MCMIPC':
+            # FD or Mesoscale don't need special filters
+            stream = ffmpeg.output(stream,
+                                   output_path,
+                                   crf=20,
+                                   preset='slower',
+                                   movflags='faststart')
+                       #        pix_fmt='yuv420p') # This works for full disk but breaks CONUS
+        else:
+            # This is CONUS
+            stream = ffmpeg.output(stream,
+                                   output_path,
+                                   crf=20,
+                                   preset='slower',
+                                   movflags='faststart',
+                                   vf='pad=ceil(iw/2)*2:ceil(ih/2)*2',
+                                   pix_fmt='yuv420p'
+            )
         ffmpeg.run(stream, overwrite_output=True)
     return
 
