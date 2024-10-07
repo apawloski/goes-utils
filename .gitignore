@@ -8,3 +8,5 @@
 
 # C extensions
 *.so
+
+.venv/
