@@ -5,6 +5,8 @@ import os
 from pathlib import Path
 
 import boto3
+from botocore import UNSIGNED
+from botocore.config import Config
 from netCDF4 import Dataset
 import matplotlib
 matplotlib.use('agg')
@@ -31,7 +33,7 @@ def retrieve_scene_by_key(key, data_dir="./data",
     else:
         outputdir = os.path.dirname(output_path)
         Path(outputdir).mkdir(parents=True, exist_ok=True)
-        s3 = boto3.client("s3")
+        s3 = boto3.client("s3", config=Config(signature_version=UNSIGNED))
         s3.download_file(bucket, key, output_path)
     
     return output_path
@@ -52,7 +54,7 @@ def find_scenes_in_date_range(start_date, end_date,
         scene_prefix = f"{product}/{scene_date.tm_year}/{scene_date.tm_yday}/{scene_date.tm_hour:02}/"
 
         # Append objects at S3 location
-        s3 = boto3.client("s3")
+        s3 = boto3.client("s3", config=Config(signature_version=UNSIGNED))
         response = s3.list_objects_v2(
             Bucket=bucket,
             Prefix=scene_prefix,
@@ -109,3 +111,29 @@ def convert_scene_to_png(input_nc, output_png, date=None, dpi=600):
     fig.savefig(output_png, facecolor='black', transparent=True, bbox_inches='tight', pad_inches=.1)
     plt.close(fig)
     return
+
+
+def retrieve_latest_scene(bucket="noaa-goes16", product='ABI-L2-MCMIPF'):
+    """Retrieves the key of the latest available scene"""
+    s3 = boto3.client("s3", config=Config(signature_version=UNSIGNED))
+    
+    # Get the current date and time
+    now = datetime.datetime.utcnow()
+    
+    # Start with the current hour and work backwards
+    for hours_ago in range(24):  # Look back up to 24 hours
+        search_time = now - datetime.timedelta(hours=hours_ago)
+        scene_prefix = f"{product}/{search_time.year}/{search_time.timetuple().tm_yday:03d}/{search_time.hour:02d}/"
+        
+        response = s3.list_objects_v2(
+            Bucket=bucket,
+            Prefix=scene_prefix,
+            MaxKeys=1
+        )
+        
+        if 'Contents' in response and len(response['Contents']) > 0:
+            # Return the key of the first (and latest) scene found
+            return response['Contents'][0]['Key']
+    
+    # If no scene found in the last 24 hours
+    return None
